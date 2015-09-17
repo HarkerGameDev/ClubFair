@@ -8,6 +8,7 @@ namespace ClubFair
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
+	/// I'm adding a comment
     public class Game1 : Game
     {
         const int PLAYERS = 5;
