@@ -1,6 +1,10 @@
 ﻿<Properties StartupItem="ClubFair/ClubFair.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x64" />
-  <MonoDevelop.Ide.Workbench />
+  <MonoDevelop.Ide.Workbench ActiveDocument="ClubFairMac/Game1.cs">
+    <Files>
+      <File FileName="ClubFairMac/Game1.cs" Line="395" Column="3" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
