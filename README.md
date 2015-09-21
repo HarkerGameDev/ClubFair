@@ -23,6 +23,17 @@ Feel free to direct friends to http://goo.gl/forms/0fWkKt7Oiv if they want to jo
   * Comment initial code
 
 
+## Running on mac
+* Control-click the ClubFairMac project and select "Set As Startup Project"
+* Clicking the run button as usual should now work
+
+### Adding content
+*TODO - write this*
+
+### Copying Game1.cs
+* everything after 'namespace ClubFair' needs to be copied into the Game1.cs in the ClubFairMac project. A solution to avoid this is being considered.
+
+
 ## How to contribute
 **Email harkergamedev@gmail.com with github username for push access**
 
