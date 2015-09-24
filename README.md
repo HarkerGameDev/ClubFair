@@ -9,7 +9,11 @@ Feel free to direct friends to http://goo.gl/forms/0fWkKt7Oiv if they want to jo
   * *Note, the internet is ALWAYS your friend*
   * Read these links: [link 1](http://www.gamefromscratch.com/post/2015/06/15/MonoGame-Tutorial-Creating-an-Application.aspx) [link 2](http://www.gamefromscratch.com/post/2015/06/19/MonoGame-Tutorial-Textures-and-SpriteBatch.aspx) [link 3](http://www.gamefromscratch.com/post/2015/06/28/MonoGame-Tutorial-Handling-Keyboard-Mouse-and-GamePad-Input.aspx)
   * Read through the commented code to get an understanding of what's going on
+  * Make powerups able to be picked up
   * Add your own unique powerup to the game - please be sane
+    * *Enter name here*
+    * ~~Schwo0ps~~
+  * Update method has a ton of stuff -> put more things into methods
 * Art
   * *Note, always use vector graphics* - a good app is Inkscape
   * Create some original icon for harker game dev
@@ -20,7 +24,8 @@ Feel free to direct friends to http://goo.gl/forms/0fWkKt7Oiv if they want to jo
 * Admin
   * Begin discussion of "The Game" project
   * Add merge instructions
-  * Comment initial code
+  * ~~Comment initial code~~
+  * Fix Mac + Windows Game1.cs syncing
 
 
 ## Running on mac

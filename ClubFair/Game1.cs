@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace ClubFair
 {
@@ -10,28 +11,40 @@ namespace ClubFair
     /// </summary>
     public class Game1 : Game
     {
+        // Game related constants
         const int PLAYERS = 5;
+        const float PEACE_TIME = 3;
+        const double GAME_TIME = 20.0;
+        const float MIN_TAG = 2.0f;
+        const float MIN_POWER_TIME = 5.0f;
+        const float MAX_POWER_TIME = 10.0f;
+
+        // Player related constants
         const int SPEED_1 = 520;
         const int SPEED_2 = 450;
         const int RADIUS_1 = 32;
         const int RADIUS_2 = 40;
-        const float PEACE_TIME = 3;
-        const float MIN_TAG = 2.0f;
-        const double GAME_TIME = 20;
 
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
-        Texture2D whiteRect;
-        SpriteFont font, fontBig;
+        // Powerup related constants
+        const float POWERUP_DURATION = 10.0f;
+        const float POWERUP_FASTER_ALL = 2.0f;
+        const float POWERUP_SLOWER_ALL = 0.5f;
+        
+        GraphicsDeviceManager graphics;     // this is always here
+        SpriteBatch spriteBatch;            // so is this
+        Texture2D whiteRect;                // useful for drawing rectangles
+        SpriteFont font, fontBig;           // fonts need to always be generated and loaded using content manager
 
         bool paused;
         Player[] players;
         Random rand;
         float resetTime;
+        float powerTime;
         int current;
         int deadPlayers;
         double _gameTime;
         int totalGames;
+        List<Powerup> powerUps;
 
         struct Player
         {
@@ -41,6 +54,26 @@ namespace ClubFair
             public Color Color;
             public bool Alive;
             public int Wins;
+        }
+
+        // Length of each side of powerup square
+        Point POWERUP_SIZE = new Point(50);
+
+        // IMPORTANT! The order of the colors defined here must correspond to the order
+        // in which the enum PowerType is defined.
+        Color[] _powerUpColors = { Color.Red, Color.Blue };
+
+        enum PowerType
+        {
+            AllFaster, AllSlower
+        }
+
+        struct Powerup
+        {
+            public Vector2 Position;
+            public PowerType Type;
+            public int PlayerAffected;
+            public float TimeLeft;
         }
 
         public Game1()
@@ -60,7 +93,7 @@ namespace ClubFair
             // set game to fullscreen and match monitor resolution
             graphics.PreferredBackBufferWidth = GraphicsDevice.DisplayMode.Width;
             graphics.PreferredBackBufferHeight = GraphicsDevice.DisplayMode.Height;
-            graphics.IsFullScreen = true;
+            graphics.IsFullScreen = false;
             graphics.ApplyChanges();
 
             // initialize all players with a random color, and specified Speed and Radius
@@ -94,6 +127,7 @@ namespace ClubFair
         private void Reset()
         {
             resetTime = PEACE_TIME;
+            powerTime = PEACE_TIME;
             current = -1;
             deadPlayers = 0;
             _gameTime = 0;
@@ -105,6 +139,8 @@ namespace ClubFair
                 players[i].Position = new Vector2(rand.Next(width), rand.Next(height));
                 players[i].Alive = true;
             }
+
+            powerUps = new List<Powerup>();
         }
 
         /// <summary>
@@ -215,18 +251,40 @@ namespace ClubFair
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // Note, this does not work well. See if you can figure out why :)
+            // Note, this does not work well. See if you can figure out why (and fix it)   :)
             if (Keyboard.GetState().IsKeyDown(Keys.Space))
                 paused = !paused;
 
-            // This is pretty much how pause works
+            // This is pretty much how pause always works
             if (!paused) {
                 _gameTime += deltaTime;
+
+                // Decrease time for powerups (be sure to do this before any crazy messing about)
+                powerUps.ForEach(power => 
+                    {
+                        if (power.PlayerAffected >= 0)      // powerup has been collected
+                            power.TimeLeft -= deltaTime;
+                    });     // Note, the syntax is weird, but it's what works based on some interwebbing
+
+                foreach (Powerup power in powerUps) // This kind of foreach can only access members
+                {
+                    if (power.PlayerAffected >= 0)
+                    {
+                        switch (power.Type)
+                        {
+                            case PowerType.AllFaster:
+                                deltaTime *= POWERUP_FASTER_ALL;    // Note: changing deltaTime could have VERY SEVERE side effects, and I think it does in this case
+                                break;
+                            case PowerType.AllSlower:
+                                deltaTime *= POWERUP_SLOWER_ALL;
+                                break;
+                        }
+                    }
+                }
 
                 // reset game once everyone is dead
                 if (deadPlayers >= players.Length - 1)
                 {
-                    _gameTime = 0.0;
                     players[current].Wins++;
                     Reset();
                     totalGames++;
@@ -255,6 +313,26 @@ namespace ClubFair
                 int minY = (int)((_gameTime) / GAME_TIME * (double)graphics.GraphicsDevice.Viewport.Height / 2.0);
                 int width = graphics.GraphicsDevice.Viewport.Width - minX * 2;
                 int height = graphics.GraphicsDevice.Viewport.Height - minY * 2;
+
+                // powerTime is time until a powerup is spawned
+                powerTime -= deltaTime;
+                if (powerTime < 0)
+                {
+                    powerTime = (float)rand.NextDouble() * (MAX_POWER_TIME - MIN_POWER_TIME) + MIN_POWER_TIME;
+
+                    // Create a new powerup
+                    Powerup power;
+
+                    // Get type of powerup randomly
+                    Array values = Enum.GetValues(typeof(PowerType));
+                    power.Type = (PowerType)values.GetValue(rand.Next(values.Length));
+
+                    power.PlayerAffected = -1;  // -1 means nobody picked it up. Why? Because I said so.
+                    power.TimeLeft = POWERUP_DURATION;
+                    power.Position = new Vector2(rand.Next(width), rand.Next(height));
+
+                    powerUps.Add(power);
+                }
 
                 for (int i = 0; i < players.Length; i++)
                 {
@@ -318,6 +396,13 @@ namespace ClubFair
             // Draw a blue rectangle in the playable area, using a scale and mask on the 1x1 white rectangle
             spriteBatch.Draw(whiteRect, new Rectangle(minX, minY, width, height), Color.CornflowerBlue);
 
+            // Draw the powerups
+            foreach (Powerup power in powerUps)
+            {
+                spriteBatch.Draw(whiteRect, new Rectangle(power.Position.ToPoint(), POWERUP_SIZE), _powerUpColors[(int)power.Type]);
+            }
+
+            // Draw the players
             for (int i = 0; i < players.Length; i++)
             {
                 if (i == current)
