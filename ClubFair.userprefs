@@ -1,4 +1,4 @@
-﻿<Properties StartupItem="ClubFair/ClubFair.csproj">
+﻿<Properties StartupItem="ClubFairMac/ClubFairMac.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x64" />
   <MonoDevelop.Ide.Workbench ActiveDocument="ClubFairMac/Game1.cs">
     <Files>

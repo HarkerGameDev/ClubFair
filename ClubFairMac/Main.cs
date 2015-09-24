@@ -6,9 +6,11 @@ using System.Linq;
 using MonoMac.AppKit;
 using MonoMac.Foundation;
 
+using Source;
+
 #endregion
 
-namespace ClubFairMac
+namespace ClubFair
 {
 	static class Program
 	{

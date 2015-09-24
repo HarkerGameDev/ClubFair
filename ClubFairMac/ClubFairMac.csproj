@@ -24,7 +24,6 @@
     <UseSGen>false</UseSGen>
     <IncludeMonoRuntime>false</IncludeMonoRuntime>
     <EnablePackageSigning>false</EnablePackageSigning>
-    <CodeSigningKey>Mac Developer</CodeSigningKey>
     <EnableCodeSigning>false</EnableCodeSigning>
     <CreatePackage>false</CreatePackage>
   </PropertyGroup>
@@ -62,7 +61,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Game1.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -75,5 +73,11 @@
   <ItemGroup>
     <BundleResource Include="Content\Score.xnb" />
     <BundleResource Include="Content\ScoreBig.xnb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Source\Source.csproj">
+      <Project>{5CDED029-4ADB-4700-952F-BE5809450734}</Project>
+      <Name>Source</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
