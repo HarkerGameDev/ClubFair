@@ -21,13 +21,13 @@ namespace Source
 
 		// Player related constants
 		const int SPEED_1 = 520;
-		const int SPEED_2 = 450;
+		const float SPEED_2_SCALE = 0.86f;
 		const int RADIUS_1 = 32;
-		const int RADIUS_2 = 40;
+		const float RADIUS_2_SCALE = 1.25f;
 
 		// Powerup related constants
 		const int POWERUP_LENGTH = 50;
-		const float POWERUP_DURATION = 10.0f;
+		const float POWERUP_DURATION = 5.0f;
 		const float POWERUP_FASTER_ALL = 2.0f;
 		const float POWERUP_SLOWER_ALL = 0.5f;
 
@@ -47,11 +47,11 @@ namespace Source
 		int totalGames;
 		List<Powerup> powerUps;
 
-		struct Player
+		class Player
 		{
 			public Vector2 Position;
-			public int Radius;
-			public int Speed;
+			public float Radius;
+			public float Speed;
 			public Color Color;
 			public bool Alive;
 			public int Wins;
@@ -61,12 +61,12 @@ namespace Source
 		// in which the enum PowerType is defined.
 		Color[] _powerUpColors = { Color.Red, Color.Blue };
 
-		enum PowerType
+		enum PowerType  // Don't forget to add a color if you add a new powerup
 		{
 			AllFaster, AllSlower
 		}
 
-		struct Powerup
+		class Powerup
 		{
 			public Vector2 Position;
 			public PowerType Type;
@@ -91,7 +91,7 @@ namespace Source
 			// set game to fullscreen and match monitor resolution
 			graphics.PreferredBackBufferWidth = GraphicsDevice.DisplayMode.Width;
 			graphics.PreferredBackBufferHeight = GraphicsDevice.DisplayMode.Height;
-			graphics.IsFullScreen = false;
+			graphics.IsFullScreen = true;
 			graphics.ApplyChanges();
 
 			// initialize all players with a random color, and specified Speed and Radius
@@ -99,13 +99,15 @@ namespace Source
 			rand = new Random();
 			int width = graphics.GraphicsDevice.Viewport.Width;     // width of screen
 			int height = graphics.GraphicsDevice.Viewport.Height;   // height of screen
-			for (int i = 0; i < players.Length; i++)
-			{
-				players[i].Color = new Color(rand.Next(256), rand.Next(256), rand.Next(256));
-				players[i].Speed = SPEED_1;
-				players[i].Radius = RADIUS_1;
-				players[i].Wins = 0;
-			}
+            for (int i = 0; i < players.Length; i++)
+            {
+                Player player = new Player();
+                players[i] = player;
+                player.Color = new Color(rand.Next(256), rand.Next(256), rand.Next(256));
+                player.Speed = SPEED_1;
+                player.Radius = RADIUS_1;
+                player.Wins = 0;
+            }
 
 			totalGames = 0;
 			paused = false;
@@ -132,10 +134,10 @@ namespace Source
 
 			int width = graphics.GraphicsDevice.Viewport.Width;
 			int height = graphics.GraphicsDevice.Viewport.Height;
-			for (int i = 0; i < players.Length; i++)
+			foreach (Player player in players)
 			{
-				players[i].Position = new Vector2(rand.Next(width), rand.Next(height));
-				players[i].Alive = true;
+				player.Position = new Vector2(rand.Next(width), rand.Next(height));
+				player.Alive = true;
 			}
 
 			powerUps = new List<Powerup>();
@@ -183,22 +185,19 @@ namespace Source
 		{
 			KeyboardState state = Keyboard.GetState();
 			float speed;
+            Player player = players[0];
 
-			// change speed if player is the red one
 			// Important, ALWAYS multiply speed by delta time when moving
-			if (current == 0)
-				speed = deltaTime * SPEED_2;
-			else
-				speed = deltaTime * players[0].Speed;
+			speed = deltaTime * player.Speed;
 
 			if (state.IsKeyDown(Keys.Right) || state.IsKeyDown(Keys.D))
-				players[0].Position.X += speed;
+				player.Position.X += speed;
 			if (state.IsKeyDown(Keys.Left) || state.IsKeyDown(Keys.A))
-				players[0].Position.X -= speed;
+				player.Position.X -= speed;
 			if (state.IsKeyDown(Keys.Down) || state.IsKeyDown(Keys.S))
-				players[0].Position.Y += speed;
+				player.Position.Y += speed;
 			if (state.IsKeyDown(Keys.Up) || state.IsKeyDown(Keys.W))
-				players[0].Position.Y -= speed;
+				player.Position.Y -= speed;
 		}
 
 		/// <summary>
@@ -222,15 +221,13 @@ namespace Source
 					{
 						// again, ALWAYS scale anything that moves by deltaTime
 						float speed;
-						if (current == i)
-							speed = deltaTime * SPEED_2;
-						else
-							speed = deltaTime * players[i].Speed;
+                        Player player = players[i];
+						speed = deltaTime * player.Speed;
 
 						// add deadzone and move. Note, Y axis is inverted
 						GamePadState state = GamePad.GetState(index, GamePadDeadZone.Circular);
-						players[i].Position.X += state.ThumbSticks.Left.X * speed;
-						players[i].Position.Y -= state.ThumbSticks.Left.Y * speed;
+						player.Position.X += state.ThumbSticks.Left.X * speed;
+						player.Position.Y -= state.ThumbSticks.Left.Y * speed;
 					}
 				}
 			}
@@ -258,14 +255,19 @@ namespace Source
 				_gameTime += deltaTime;
 
 				// Decrease time for powerups (be sure to do this before any crazy messing about)
-				for (int i=0; i<powerUps.Count; i++)
+				for (int i=powerUps.Count-1; i>=0; i--)
 				{
 					Powerup power = powerUps [i];
-					if (power.PlayerAffected >= 0)      // powerup has been collected
-						power.TimeLeft -= deltaTime;
+                    if (power.PlayerAffected >= 0)          // powerup has been collected
+                    {
+                        powerUps[i].TimeLeft -= deltaTime;
+                        if (powerUps[i].TimeLeft < 0)
+                            powerUps.RemoveAt(i);
+                    }
 				}
 
-				foreach (Powerup power in powerUps) // This kind of foreach can only access members
+                // Apply global powerups
+				foreach (Powerup power in powerUps)
 				{
 					if (power.PlayerAffected >= 0)
 					{
@@ -285,6 +287,8 @@ namespace Source
 				if (deadPlayers >= players.Length - 1)
 				{
 					players[current].Wins++;
+                    players[current].Speed /= SPEED_2_SCALE;
+                    players[current].Radius /= RADIUS_2_SCALE;
 					Reset();
 					totalGames++;
 				}
@@ -296,6 +300,13 @@ namespace Source
 				resetTime -= deltaTime;
 				if (resetTime < 0)
 				{
+                    // Undo radius and speed scales
+                    if (current >= 0)
+                    {
+                        players[current].Speed /= SPEED_2_SCALE;
+                        players[current].Radius /= RADIUS_2_SCALE;
+                    }
+
 					// Time to reset is randomly acquired
 					resetTime = (float)rand.NextDouble() + MIN_TAG;
 
@@ -305,6 +316,10 @@ namespace Source
 					while (next == current || !players[next].Alive)
 						next = rand.Next(players.Length);
 					current = next;
+
+                    // Set new player radius and speed scales
+                    players[current].Speed *= SPEED_2_SCALE;
+                    players[current].Radius = ((float)players[current].Radius * RADIUS_2_SCALE);
 				}
 
 				// Calculate bounds of the shrinking, playable screen by using game time since reset
@@ -320,7 +335,7 @@ namespace Source
 					powerTime = (float)rand.NextDouble() * (MAX_POWER_TIME - MIN_POWER_TIME) + MIN_POWER_TIME;
 
 					// Create a new powerup
-					Powerup power;
+                    Powerup power = new Powerup();
 
 					// Get type of powerup randomly
 					Array values = Enum.GetValues(typeof(PowerType));
@@ -328,48 +343,56 @@ namespace Source
 
 					power.PlayerAffected = -1;  // -1 means nobody picked it up. Why? Because I said so.
 					power.TimeLeft = POWERUP_DURATION;
-					power.Position = new Vector2(rand.Next(width), rand.Next(height));
+					power.Position = new Vector2(rand.Next(width) + minX, rand.Next(height) + minY);
 
 					powerUps.Add(power);
 				}
 
 				for (int i = 0; i < players.Length; i++)
 				{
-					// Calculate bounds for player
-					int maxX, maxY;
-					if (i == current)
-					{
-						// red player has bigger radius, so different collision
-						maxX = minX + width - RADIUS_2 * 2;
-						maxY = minY + height - RADIUS_2 * 2;
-					}
-					else
-					{
-						maxX = minX + width - players[i].Radius * 2;
-						maxY = minY + height - players[i].Radius * 2;
-					}
+                    Player player = players[i];
+                    if (player.Alive)
+                    {
+                        // Calculate bounds for player
+                        int maxX, maxY;
+                        maxX = minX + width - (int)(player.Radius * 2);
+                        maxY = minY + height - (int)(player.Radius * 2);
 
-					// Make sure player is within bounds
-					if (players[i].Position.X > maxX)
-						players[i].Position.X = maxX;
-					else if (players[i].Position.X < minX)
-						players[i].Position.X = minX;
-					if (players[i].Position.Y > maxY)
-						players[i].Position.Y = maxY;
-					else if (players[i].Position.Y < minY)
-						players[i].Position.Y = minY;
+                        // Make sure player is within bounds
+                        if (player.Position.X > maxX)
+                            player.Position.X = maxX;
+                        else if (player.Position.X < minX)
+                            player.Position.X = minX;
+                        if (player.Position.Y > maxY)
+                            player.Position.Y = maxY;
+                        else if (player.Position.Y < minY)
+                            player.Position.Y = minY;
 
-					// check collisions to tag player
-					if (i != current && current >= 0 && players[i].Alive)
-					{
-						// Circle collisions are really easy because only the distance between the centers matter
-						float dist = (players[current].Position - players[i].Position).Length();
-						if (dist < players[current].Radius + players[i].Radius)
-						{
-							players[i].Alive = false;
-							deadPlayers++;
-						}
-					}
+                        // check collisions to tag player
+                        if (i != current && current >= 0)
+                        {
+                            // Circle collisions are really easy because only the distance between the centers matter
+                            float dist = (players[current].Position - player.Position).Length();
+                            if (dist < players[current].Radius + player.Radius)
+                            {
+                                player.Alive = false;
+                                deadPlayers++;
+                            }
+                        }
+
+                        // check collisions to pick up powerup
+                        foreach (Powerup power in powerUps)
+                        {
+                            if (power.PlayerAffected < 0)
+                            {
+                                float dist = (player.Position - power.Position).Length();
+                                if (dist < player.Radius + POWERUP_LENGTH)
+                                {
+                                    power.PlayerAffected = i;
+                                }
+                            }
+                        }
+                    }
 				}
 			}
 
@@ -398,24 +421,25 @@ namespace Source
 			// Draw the powerups
 			foreach (Powerup power in powerUps)
 			{
-				spriteBatch.Draw(whiteRect, 
-					new Rectangle((int)power.Position.X, (int)power.Position.Y, POWERUP_LENGTH, POWERUP_LENGTH),
-					_powerUpColors[(int)power.Type]);
+                if (power.PlayerAffected < 0)
+				    spriteBatch.Draw(whiteRect, 
+					    new Rectangle((int)power.Position.X, (int)power.Position.Y, POWERUP_LENGTH, POWERUP_LENGTH),
+					    _powerUpColors[(int)power.Type]);
 			}
 
 			// Draw the players
-			for (int i = 0; i < players.Length; i++)
-			{
-				if (i == current)
-				{
-					// Draw red player differently
-					Texture2D circle = CreateCircle(RADIUS_2);
-					spriteBatch.Draw(circle, players[i].Position, Color.Red);
-				} else if (players[i].Alive) {
-					Texture2D circle = CreateCircle(players[i].Radius);
-					spriteBatch.Draw(circle, players[i].Position, players[i].Color);
-				}
-			}
+            for (int i = 0; i < players.Length; i++)
+            {
+                Player player = players[i];
+                if (player.Alive)
+                {
+                    Texture2D circle = CreateCircle((int)player.Radius);
+                    if (i == current)
+                        spriteBatch.Draw(circle, player.Position, Color.Red);
+                    else
+                        spriteBatch.Draw(circle, player.Position, player.Color);
+                }
+            }
 
 			// Display scores in the top left
 			System.Text.StringBuilder text = new System.Text.StringBuilder();
