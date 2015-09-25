@@ -63,7 +63,7 @@ namespace Source
 
 		enum PowerType  // Don't forget to add a color if you add a new powerup
 		{
-			AllFaster, AllSlower
+			AllFaster, AllSlower, KillRed
 		}
 
 		class Powerup
@@ -279,6 +279,10 @@ namespace Source
 						case PowerType.AllSlower:
 							deltaTime *= POWERUP_SLOWER_ALL;
 							break;
+                        case PowerType.KillRed:
+                            players[current].Alive = false;
+                            deadPlayers++;
+                            break;
 						}
 					}
 				}
