@@ -37,7 +37,7 @@ namespace Source
 		SpriteFont font, fontBig;           // fonts need to always be generated and loaded using content manager
 
 		bool paused;
-		Player[] players;
+		Player[] players; //I can comment!
 		Random rand;
 		float resetTime;
 		float powerTime;
