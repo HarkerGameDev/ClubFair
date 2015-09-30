@@ -59,7 +59,7 @@ namespace Source
 
 		// IMPORTANT! The order of the colors defined here must correspond to the order
 		// in which the enum PowerType is defined.
-		Color[] _powerUpColors = { Color.Red, Color.Blue };
+		Color[] _powerUpColors = { Color.Red, Color.Blue, Color.Purple };
 
 		enum PowerType  // Don't forget to add a color if you add a new powerup
 		{
@@ -280,8 +280,11 @@ namespace Source
 							deltaTime *= POWERUP_SLOWER_ALL;
 							break;
                         case PowerType.KillRed:
-                            players[current].Alive = false;
-                            deadPlayers++;
+                            if(current>=0)
+                            {
+                                players[current].Alive = false;
+                                deadPlayers++;
+                            }
                             break;
 						}
 					}
