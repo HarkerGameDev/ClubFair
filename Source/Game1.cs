@@ -59,11 +59,11 @@ namespace Source
 
 		// IMPORTANT! The order of the colors defined here must correspond to the order
 		// in which the enum PowerType is defined.
-		Color[] _powerUpColors = { Color.Red, Color.Blue, Color.Purple };
+		Color[] _powerUpColors = { Color.Red, Color.Blue, Color.Purple, Color.Cyan };
 
 		enum PowerType  // Don't forget to add a color if you add a new powerup
 		{
-			AllFaster, AllSlower, KillRed
+			AllFaster, AllSlower, KillRed, BecomeRed
 		}
 
 		class Powerup
@@ -286,6 +286,17 @@ namespace Source
                                 deadPlayers++;
                             }
                             break;
+						case PowerType.BecomeRed:
+							// make sure the new red player is not the same or dead
+							if (power.PlayerAffected != current && players [power.PlayerAffected].Alive) {
+								players [current].Radius = RADIUS_1;
+								players [current].Speed = SPEED_1;
+								current = power.PlayerAffected;
+								// Set new player radius and speed scales
+								players [current].Speed *= SPEED_2_SCALE;
+								players [current].Radius = ((float)players [current].Radius * RADIUS_2_SCALE);
+							}
+							break;
 						}
 					}
 				}
@@ -354,7 +365,22 @@ namespace Source
 
 					powerUps.Add(power);
 				}
+				for (int i = 0; i < powerUps.Count; i++) {
+					Powerup power = powerUps[i];
+					int maxX, maxY;
+					maxX = minX + width - (int)(POWERUP_LENGTH);
+					maxY = minY + height - (int)(POWERUP_LENGTH);
 
+					// Make sure player is within bounds
+					if (power.Position.X > maxX)
+						power.Position.X = maxX;
+					else if (power.Position.X < minX)
+						power.Position.X = minX;
+					if (power.Position.Y > maxY)
+						power.Position.Y = maxY;
+					else if (power.Position.Y < minY)
+						power.Position.Y = minY;
+				}
 				for (int i = 0; i < players.Length; i++)
 				{
                     Player player = players[i];
