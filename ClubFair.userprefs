@@ -1,8 +1,8 @@
 ﻿<Properties StartupItem="ClubFairMac/ClubFairMac.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x64" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="ClubFairMac/Game1.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Source/Game1.cs">
     <Files>
-      <File FileName="ClubFairMac/Game1.cs" Line="395" Column="3" />
+      <File FileName="Source/Game1.cs" Line="44" Column="15" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
