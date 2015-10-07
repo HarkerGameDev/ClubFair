@@ -27,7 +27,7 @@ namespace Source
 
 		// Powerup related constants
 		const int POWERUP_LENGTH = 50;
-		const float POWERUP_DURATION = 5.0f;
+		const float POWERUP_DURATION = 4.0f;
 		const float POWERUP_FASTER_ALL = 2.0f;
 		const float POWERUP_SLOWER_ALL = 0.5f;
 
@@ -37,13 +37,13 @@ namespace Source
 		SpriteFont font, fontBig;           // fonts need to always be generated and loaded using content manager
 
 		bool paused;
-		Player[] players; //I can comment!
+		Player[] players;
 		Random rand;
-		float resetTime;
-		float powerTime;
+		float resetTime;    //Time until current player swaps
+		float powerTime;    //Time until new powerup spawns
 		int current;
 		int deadPlayers;
-		double _gameTime;
+		double _gameTime;   //Total game time used for scaling level
 		int totalGames;
 		List<Powerup> powerUps;
 
@@ -63,7 +63,7 @@ namespace Source
 
 		enum PowerType  // Don't forget to add a color if you add a new powerup
 		{
-			AllFaster, AllSlower, KillRed, BecomeRed
+			AllFaster, AllSlower, RedWins, BecomeRed
 		}
 
 		class Powerup
@@ -279,7 +279,7 @@ namespace Source
 						case PowerType.AllSlower:
 							deltaTime *= POWERUP_SLOWER_ALL;
 							break;
-                        case PowerType.KillRed:
+                        case PowerType.RedWins:         // Note of warning: this does not kill red. It makes the current red player instantly win.
                             if(current>=0)
                             {
                                 players[current].Alive = false;
@@ -287,14 +287,16 @@ namespace Source
                             }
                             break;
 						case PowerType.BecomeRed:
-							// make sure the new red player is not the same or dead
-							if (power.PlayerAffected != current && players [power.PlayerAffected].Alive) {
-								players [current].Radius = RADIUS_1;
-								players [current].Speed = SPEED_1;
+							// make sure the new red player is not dead
+							if (players [power.PlayerAffected].Alive) {
+								players [current].Radius /= RADIUS_2_SCALE;
+								players [current].Speed /= SPEED_2_SCALE;
+
 								current = power.PlayerAffected;
 								// Set new player radius and speed scales
 								players [current].Speed *= SPEED_2_SCALE;
-								players [current].Radius = ((float)players [current].Radius * RADIUS_2_SCALE);
+								players [current].Radius *= RADIUS_2_SCALE;
+                                resetTime = 1;          // Make sure game does not try to automatically set the next current player
 							}
 							break;
 						}
@@ -357,7 +359,10 @@ namespace Source
 
 					// Get type of powerup randomly
 					Array values = Enum.GetValues(typeof(PowerType));
-					power.Type = (PowerType)values.GetValue(rand.Next(values.Length));
+                    power.Type = (PowerType)values.GetValue(rand.Next(values.Length));
+                    
+                    // use something like this for testing
+                    //power.Type = PowerType.RedWins;
 
 					power.PlayerAffected = -1;  // -1 means nobody picked it up. Why? Because I said so.
 					power.TimeLeft = POWERUP_DURATION;
@@ -371,7 +376,7 @@ namespace Source
 					maxX = minX + width - (int)(POWERUP_LENGTH);
 					maxY = minY + height - (int)(POWERUP_LENGTH);
 
-					// Make sure player is within bounds
+					// Make sure powerup is within bounds
 					if (power.Position.X > maxX)
 						power.Position.X = maxX;
 					else if (power.Position.X < minX)
